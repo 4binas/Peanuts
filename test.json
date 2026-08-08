@@ -1,0 +1,211 @@
+{
+	"items": [
+		{
+			"name": "Veggie Hackfleisch",
+			"description": "Rabatt 20%",
+			"quantity": 1,
+			"unitPrice": 2.99,
+			"discount": -0.6,
+			"totalPrice": 2.39,
+			"currency": "CHF"
+		},
+		{
+			"name": "TN Eisbergsalat",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 1.99,
+			"discount": 0,
+			"totalPrice": 1.99,
+			"currency": "CHF"
+		},
+		{
+			"name": "Mozzarella gerieben",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 2.69,
+			"discount": 0,
+			"totalPrice": 2.69,
+			"currency": "CHF"
+		},
+		{
+			"name": "Pommes Frites 9x9mm",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 7.99,
+			"discount": 0,
+			"totalPrice": 7.99,
+			"currency": "CHF"
+		},
+		{
+			"name": "Findus Marché Rahmpinat",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 5.95,
+			"discount": 0,
+			"totalPrice": 5.95,
+			"currency": "CHF"
+		},
+		{
+			"name": "Die Butter",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 3.85,
+			"discount": 0,
+			"totalPrice": 3.85,
+			"currency": "CHF"
+		},
+		{
+			"name": "Sonnenblumenmargarine 80",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 2.19,
+			"discount": 0,
+			"totalPrice": 2.19,
+			"currency": "CHF"
+		},
+		{
+			"name": "Alustar 15?",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 4.25,
+			"discount": 0,
+			"totalPrice": 4.25,
+			"currency": "CHF"
+		},
+		{
+			"name": "TK Erbsen",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 2.89,
+			"discount": 0,
+			"totalPrice": 2.89,
+			"currency": "CHF"
+		},
+		{
+			"name": "Grana Padano-Käse DOP 16",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 3.26,
+			"discount": 0,
+			"totalPrice": 3.26,
+			"currency": "CHF"
+		},
+		{
+			"name": "Bio Tofu geräuchert",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 1.49,
+			"discount": 0,
+			"totalPrice": 1.49,
+			"currency": "CHF"
+		},
+		{
+			"name": "Bio Passierte Tomaten",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 1.39,
+			"discount": 0,
+			"totalPrice": 1.39,
+			"currency": "CHF"
+		},
+		{
+			"name": "Feldschl Ori 4.8% 6x0.5l",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 11.49,
+			"discount": 0,
+			"totalPrice": 11.49,
+			"currency": "CHF"
+		},
+		{
+			"name": "Lauchzwiebeln Bd",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 1.59,
+			"discount": 0,
+			"totalPrice": 1.59,
+			"currency": "CHF"
+		},
+		{
+			"name": "Flying Goose Sriracha Ch",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 4.89,
+			"discount": 0,
+			"totalPrice": 4.89,
+			"currency": "CHF"
+		},
+		{
+			"name": "Pizzateig Dinkelweizenvo",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 1.99,
+			"discount": 0,
+			"totalPrice": 1.99,
+			"currency": "CHF"
+		},
+		{
+			"name": "Champignons braun",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 1.99,
+			"discount": 0,
+			"totalPrice": 1.99,
+			"currency": "CHF"
+		},
+		{
+			"name": "Zuckerm. Rupper. F.t. Ro",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 2.29,
+			"discount": 0,
+			"totalPrice": 2.29,
+			"currency": "CHF"
+		},
+		{
+			"name": "TN CH Eier FH IPS 53g+",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 3.29,
+			"discount": 0,
+			"totalPrice": 3.29,
+			"currency": "CHF"
+		},
+		{
+			"name": "CH-Rispentomaten kg lose",
+			"description": "0.707 kg x 2.99 CHF/kg",
+			"quantity": 0.707,
+			"unitPrice": 2.99,
+			"discount": 0,
+			"totalPrice": 2.11,
+			"currency": "CHF"
+		},
+		{
+			"name": "DUO Emmi Joghurt Pur Erd",
+			"description": "2 x 2.25",
+			"quantity": 2,
+			"unitPrice": 2.25,
+			"discount": 0,
+			"totalPrice": 4.5,
+			"currency": "CHF"
+		},
+		{
+			"name": "Milchdrink 2.5% pasteur",
+			"description": "",
+			"quantity": 1,
+			"unitPrice": 1.35,
+			"discount": 0,
+			"totalPrice": 1.35,
+			"currency": "CHF"
+		},
+		{
+			"name": "Auberginen",
+			"description": "0.818 kg x 3.79 CHF/kg",
+			"quantity": 0.818,
+			"unitPrice": 3.79,
+			"discount": 0,
+			"totalPrice": 3.1,
+			"currency": "CHF"
+		}
+	]
+}

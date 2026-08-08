@@ -1,5 +1,7 @@
-import { form } from '$app/server';
-import llmService from '$lib/server/services/LLMService';
+import { form, getRequestEvent } from '$app/server';
+import { auth } from '$lib/server/auth';
+import { receiptRepository } from '$lib/server/repository/receptRepository';
+import llmService from '$lib/server/services/llmService';
 import * as v from 'valibot';
 
 export const createReceipt = form(
@@ -8,10 +10,24 @@ export const createReceipt = form(
 		image: v.pipe(v.file(), v.mimeType(['image/jpeg', 'image/png', 'image/webp']), v.minSize(1))
 	}),
 	async (data) => {
+		const event = getRequestEvent();
+		const session = await auth.api.getSession({
+			headers: event.request.headers
+		});
+
+		if (!session) {
+			throw new Error('Unauthorized');
+		}
 		const buffer = Buffer.from(await data.image.arrayBuffer());
 		const base64 = buffer.toString('base64');
 		const dataUrl = `data:${data.image.type};base64,${base64}`;
-		const result = await llmService.generateText(dataUrl);
-		return { receipt: result };
+		const result = await llmService.generateReciptFromImage(dataUrl);
+
+		try {
+			await receiptRepository.createReceipt(session.user.id, result.totalPrice, result.items);
+			return { receipt: result };
+		} catch (error) {
+			throw new Error('Failed to create receipt: ' + error, { cause: error });
+		}
 	}
 );

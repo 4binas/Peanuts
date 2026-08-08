@@ -1,5 +1,17 @@
 import { relations } from 'drizzle-orm';
-import { pgTable, text, timestamp, boolean, index } from 'drizzle-orm/pg-core';
+import {
+	pgTable,
+	text,
+	timestamp,
+	boolean,
+	index,
+	numeric,
+	uuid,
+	integer,
+	varchar
+} from 'drizzle-orm/pg-core';
+
+// BetterAuth tables
 
 export const user = pgTable('user', {
 	id: text('id').primaryKey(),
@@ -88,6 +100,109 @@ export const sessionRelations = relations(session, ({ one }) => ({
 export const accountRelations = relations(account, ({ one }) => ({
 	user: one(user, {
 		fields: [account.userId],
+		references: [user.id]
+	})
+}));
+
+// Receipt
+
+export const receipt = pgTable('receipt', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id),
+	boughtAt: timestamp('bought_at').defaultNow().notNull(),
+	totalPrice: integer('total_price').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.defaultNow()
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull()
+});
+
+export const receiptRelations = relations(receipt, ({ one, many }) => ({
+	user: one(user, {
+		fields: [receipt.userId],
+		references: [user.id]
+	}),
+	items: many(receipt_item)
+}));
+
+export const receipt_item = pgTable('receipt_item', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	receiptId: uuid('receipt_id')
+		.notNull()
+		.references(() => receipt.id),
+	name: text('name'),
+	description: text('description'),
+	quantity: integer('quantity').notNull(),
+	unitPrice: integer('unit_price').notNull(),
+	discount: integer('discount').notNull().default(0),
+	totalPrice: integer('total_price').notNull(),
+	currency: varchar('currency', { length: 3 }).notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.defaultNow()
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull()
+});
+
+export const exchangeRate = pgTable('exchange_rate', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	from: varchar('from', { length: 3 }).notNull(),
+	to: varchar('to', { length: 3 }).notNull(),
+	exchangeRate: numeric('exchange_rate').notNull(),
+	date: timestamp('date').defaultNow().notNull()
+});
+
+export const receipt_itemRelations = relations(receipt_item, ({ one }) => ({
+	receipt: one(receipt, {
+		fields: [receipt_item.receiptId],
+		references: [receipt.id]
+	})
+}));
+
+// Group
+
+export const group = pgTable('group', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	name: text('name').notNull(),
+	currency: varchar('currency', { length: 3 }).notNull(),
+	ownerId: text('owner_id')
+		.notNull()
+		.references(() => user.id),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.defaultNow()
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull()
+});
+
+export const groupRelations = relations(group, ({ one, many }) => ({
+	owner: one(user, {
+		fields: [group.ownerId],
+		references: [user.id]
+	}),
+	members: many(groupMembers)
+}));
+
+export const groupMembers = pgTable('group_members', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	groupId: uuid('group_id')
+		.notNull()
+		.references(() => group.id),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id)
+});
+
+export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
+	group: one(group, {
+		fields: [groupMembers.groupId],
+		references: [group.id]
+	}),
+	user: one(user, {
+		fields: [groupMembers.userId],
 		references: [user.id]
 	})
 }));
