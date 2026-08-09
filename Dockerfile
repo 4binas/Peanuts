@@ -36,8 +36,8 @@ COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
 COPY --from=builder --chown=appuser:appgroup /app/build ./build
 
 # Copy config and schema
-COPY --from=builder --chown=appuser:appgroup /app/drizzle.config.ts ./
-COPY --from=builder --chown=appuser:appgroup /app/src/lib/server/db ./src/lib/server/db
+COPY ./drizzle.config.ts ./
+COPY ./src/lib/server/db ./src/lib/server/db
 
 USER appuser
 ENV NODE_ENV=production

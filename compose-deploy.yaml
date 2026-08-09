@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15
+    image: postgres:latest
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -23,9 +23,11 @@ services:
     command: ['npx', 'drizzle-kit', 'migrate']
     environment:
       DATABASE_URL: ${DATABASE_URL}
+    networks:
+      - db
     depends_on:
       db:
-        condition: service_health
+        condition: service_healthy
     restart: on-failure
 
   app:
@@ -42,8 +44,10 @@ services:
       LLM_ENDPOINT: ${LLM_ENDPOINT}
       LLM_MODEL: ${LLM_MODEL}
       BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT}
+    ports:
+      - '3000:3000'
     networks:
-      - caddy
+      # - caddy
       - db
     labels:
       caddy: peanuts.server.ch
@@ -53,8 +57,8 @@ services:
         condition: service_completed_successfully
 
 networks:
-  caddy:
-    external: true
+  # caddy:
+  #   external: true
   db:
 
 volumes:
