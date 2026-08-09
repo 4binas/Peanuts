@@ -1,6 +1,6 @@
 import { form, getRequestEvent } from '$app/server';
-import { auth } from '$lib/server/auth';
-import llmService from '$lib/server/services/llmService';
+import { getAuth } from '$lib/server/auth';
+import { generateReciptFromImage } from '$lib/server/services/llmService';
 import * as v from 'valibot';
 
 export const createReceipt = form(
@@ -10,7 +10,7 @@ export const createReceipt = form(
 	}),
 	async (data) => {
 		const event = getRequestEvent();
-		const session = await auth.api.getSession({
+		const session = await getAuth().api.getSession({
 			headers: event.request.headers
 		});
 
@@ -20,7 +20,7 @@ export const createReceipt = form(
 		const buffer = Buffer.from(await data.image.arrayBuffer());
 		const base64 = buffer.toString('base64');
 		const dataUrl = `data:${data.image.type};base64,${base64}`;
-		const result = await llmService.generateReciptFromImage(dataUrl);
+		const result = await generateReciptFromImage(dataUrl);
 
 		try {
 			return { receipt: result };

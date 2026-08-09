@@ -1,5 +1,5 @@
 import { form, getRequestEvent } from '$app/server';
-import { auth } from '$lib/server/auth';
+import { getAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { receipt } from '$lib/server/db/schema';
 import * as v from 'valibot';
@@ -7,11 +7,12 @@ import * as v from 'valibot';
 export const createExpense = form(
 	v.object({
 		boughtAt: v.pipe(v.string(), v.nonEmpty()),
-		totalPrice: v.pipe(v.number(), v.minValue(0))
+		totalPrice: v.pipe(v.number(), v.minValue(0)),
+		storeName: v.pipe(v.string(), v.nonEmpty())
 	}),
 	async (data) => {
 		const event = getRequestEvent();
-		const session = await auth.api.getSession({
+		const session = await getAuth().api.getSession({
 			headers: event.request.headers
 		});
 
@@ -24,7 +25,8 @@ export const createExpense = form(
 				.insert(receipt)
 				.values({
 					userId: session.user.id,
-					totalPrice: data.totalPrice
+					totalPrice: data.totalPrice,
+					storeName: data.storeName
 				})
 				.returning()
 				.then(([r]) => r);

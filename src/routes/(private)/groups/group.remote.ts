@@ -1,5 +1,5 @@
 import { form, getRequestEvent, query } from '$app/server';
-import { auth } from '$lib/server/auth';
+import { getAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { group, groupMembers } from '$lib/server/db/schema';
 import { error, redirect } from '@sveltejs/kit';
@@ -9,7 +9,7 @@ import z from 'zod';
 
 export const getGroups = query(async () => {
 	const event = getRequestEvent();
-	const session = await auth.api.getSession({
+	const session = await getAuth().api.getSession({
 		headers: event.request.headers
 	});
 
@@ -36,7 +36,7 @@ export const getGroupById = query(v.string(), async (id: string) => {
 		throw error(400, 'Invalid group ID');
 	}
 	const event = getRequestEvent();
-	const session = await auth.api.getSession({
+	const session = await getAuth().api.getSession({
 		headers: event.request.headers
 	});
 	if (!session?.user.id) error(401, 'Unauthorized');
@@ -62,7 +62,7 @@ export const createGroup = form(
 	async ({ name, currency }) => {
 		const event = getRequestEvent();
 		// Check the user is logged in
-		const session = await auth.api.getSession({
+		const session = await getAuth().api.getSession({
 			headers: event.request.headers
 		});
 		if (!session?.user.id) error(401, 'Unauthorized');
@@ -100,7 +100,7 @@ export const addMember = form(
 	async ({ groupId, userId }) => {
 		const event = getRequestEvent();
 		// Check the user is logged in
-		const session = await auth.api.getSession({
+		const session = await getAuth().api.getSession({
 			headers: event.request.headers
 		});
 		if (!session?.user.id) error(401, 'Unauthorized');
