@@ -1,20 +1,35 @@
+version: '3.8'
+
 services:
   db:
-    image: postgres
+    image: postgres:15
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - pgdata:/var/lib/postgresql
+      - pgdata:/var/lib/postgresql/data # ✅ Fixed path
+    networks:
+      - db
+    healthcheck: # ✅ Ensures PostgreSQL is ready before migrations run
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrations:
+    image: ghcr.io/4binas/peanuts:latest
+    command: ['sh', '-c', 'npm run db:migrate'] # ✅ Removed npm i (should be baked in)
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy # ✅ Waits for PostgreSQL to be healthy
+    restart: on-failure # ✅ Retry if migration fails
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - 3000:3000
+    image: ghcr.io/4binas/peanuts:latest
     environment:
       DATABASE_URL: ${DATABASE_URL}
       ORIGIN: ${ORIGIN}
@@ -27,6 +42,20 @@ services:
       LLM_ENDPOINT: ${LLM_ENDPOINT}
       LLM_MODEL: ${LLM_MODEL}
       BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT}
+    networks:
+      - caddy
+      - db
+    labels:
+      caddy: peanuts.server.ch
+      caddy.reverse_proxy: '{{upstreams 3000}}'
+    depends_on:
+      migrations:
+        condition: service_completed_successfully # ✅ Waits for migrations to finish
+
+networks:
+  caddy:
+    external: true
+  db:
 
 volumes:
   pgdata:

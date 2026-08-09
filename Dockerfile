@@ -30,9 +30,15 @@ RUN corepack enable && pnpm build && pnpm prune --prod
 FROM node:24-alpine AS app
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 COPY --from=builder --chown=appuser:appgroup /app/package.json /app/pnpm-lock.yaml ./
 COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
 COPY --from=builder --chown=appuser:appgroup /app/build ./build
+
+# Drizzle needs the TS schema file at runtime to read the structure
+COPY --from=builder --chown=appuser:appgroup /app/drizzle.config.ts ./
+COPY --from=builder --chown=appuser:appgroup /app/src/lib/server/db ./src/lib/server/db
+
 USER appuser
 ENV NODE_ENV=production
 EXPOSE 3000
