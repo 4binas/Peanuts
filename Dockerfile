@@ -1,28 +1,39 @@
+# syntax=docker/dockerfile:1
+
+# ── Stage 1: Install dependencies ──────────────────────────────────
 FROM node:24-alpine AS installer
-
-WORKDIR /build
+WORKDIR /app
 ENV CI=true
-
-COPY ./pnpm-lock.yaml ./package.json ./pnpm-workspace.yaml ./
-
+COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
 RUN corepack enable && pnpm install --frozen-lockfile
 
-COPY . .
-
-FROM node:24-alpine AS builder
-
+# ── Stage 2: Development (includes all deps + source) ──────────────
+FROM node:24-alpine AS dev
 WORKDIR /app
+ENV CI=true NODE_ENV=development
+COPY --from=installer /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
+COPY --from=installer /app/node_modules ./node_modules
+COPY . .
+RUN corepack enable
+EXPOSE 5173
 
-COPY --from=installer /build /app
-
+# ── Stage 3: Build for production ──────────────────────────────────
+FROM node:24-alpine AS builder
+WORKDIR /app
 ENV CI=true
+COPY --from=installer /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
+COPY --from=installer /app/node_modules ./node_modules
+COPY . .
+RUN corepack enable && pnpm build && pnpm prune --prod
 
-RUN pnpm build && pnpm prune --prod
-
+# ── Stage 4: Production image ──────────────────────────────────────
 FROM node:24-alpine AS app
 WORKDIR /app
-COPY --from=installer /build/package.json /build/pnpm-lock.yaml /app/
-COPY --from=installer /build/node_modules /app/node_modules
-COPY --from=builder /build/build /app/build
-
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+COPY --from=builder --chown=appuser:appgroup /app/package.json /app/pnpm-lock.yaml ./
+COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:appgroup /app/build ./build
+USER appuser
+ENV NODE_ENV=production
+EXPOSE 3000
 CMD ["node", "build"]

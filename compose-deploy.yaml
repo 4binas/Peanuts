@@ -2,8 +2,6 @@ services:
   db:
     image: postgres
     restart: always
-    ports:
-      - 5432:5432
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -15,9 +13,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: dev
     ports:
-      - 5173:5173
+      - 3000:3000
     environment:
       DATABASE_URL: ${DATABASE_URL}
       ORIGIN: ${ORIGIN}
@@ -30,16 +27,6 @@ services:
       LLM_ENDPOINT: ${LLM_ENDPOINT}
       LLM_MODEL: ${LLM_MODEL}
       BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT}
-    working_dir: /app
-    develop:
-      watch:
-        - path: ./src
-          action: sync
-          target: /app/src
-          ignore:
-            - node_modules/
-        - path: ./package.json
-          action: rebuild
-    command: ['pnpm', 'run', 'dev', '--host']
+
 volumes:
   pgdata:
