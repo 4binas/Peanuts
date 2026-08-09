@@ -1,1 +1,0 @@
-ALTER TABLE "receipt" ADD COLUMN "store_name" text NOT NULL;

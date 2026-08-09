@@ -5,43 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1785783680030,
-      "tag": "0000_blue_lady_ursula",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1785786060580,
-      "tag": "0001_redundant_chameleon",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1785866830280,
-      "tag": "0002_ambiguous_lila_cheney",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1785877325016,
-      "tag": "0003_lethal_wrecker",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1785877390980,
-      "tag": "0004_puzzling_masked_marvel",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1786225661942,
-      "tag": "0005_slow_lorna_dane",
+      "when": 1786303024792,
+      "tag": "0000_blushing_madame_web",
       "breakpoints": true
     }
   ]
