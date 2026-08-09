@@ -146,8 +146,6 @@
 							<button onclick={() => deleteItem(item.id)}>DELETE</button>
 						</div>
 					</div>
-
-					<!-- <div class="item currency">{currency}</div> -->
 				{/each}
 			</div>
 			<div class="add-item">
@@ -158,7 +156,6 @@
 		<div class="total">
 			<div class="item name">Total {currency}</div>
 			<div class="price-title item">{total}</div>
-			<!-- <div class="item currency">{currency}</div> -->
 		</div>
 	</div>
 </div>
