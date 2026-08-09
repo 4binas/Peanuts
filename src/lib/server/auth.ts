@@ -1,13 +1,13 @@
 import { env } from '$env/dynamic/private';
+import { env as publicEnv } from '$env/dynamic/public';
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
 import { genericOAuth } from 'better-auth/plugins';
-import { PUBLIC_OIDC_PROVIDER_ID } from '$env/static/public';
 
-const providerId = PUBLIC_OIDC_PROVIDER_ID;
+const providerId = publicEnv.PUBLIC_OIDC_PROVIDER_ID;
 const clientId = env.OIDC_CLIENT_ID;
 const clientSecret = env.OIDC_CLIENT_SECRET;
 const discoveryUrl = env.OIDC_DISCOVERY_URL;

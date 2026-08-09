@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
-import { LLM_API_KEY, LLM_MODEL, LLM_ENDPOINT } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { ReceiptSchema } from '../repository/receptRepository';
 import * as z from 'zod';
 
@@ -90,6 +90,6 @@ class LLMService {
 	}
 }
 
-const llmService = new LLMService(LLM_API_KEY, LLM_MODEL, LLM_ENDPOINT);
+const llmService = new LLMService(env.LLM_API_KEY, env.LLM_MODEL, env.LLM_ENDPOINT);
 
 export default llmService;
