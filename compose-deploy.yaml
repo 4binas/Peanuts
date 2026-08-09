@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:latest
@@ -10,6 +8,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql
+    ports:
+      - '5432:5432'
     networks:
       - db
     healthcheck:
@@ -20,7 +20,7 @@ services:
 
   migrations:
     image: ghcr.io/4binas/peanuts:latest
-    command: ['npx', 'drizzle-kit', 'migrate']
+    command: ['npm', 'run', 'db:migrate']
     environment:
       DATABASE_URL: ${DATABASE_URL}
     networks:
@@ -28,7 +28,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    restart: on-failure
 
   app:
     image: ghcr.io/4binas/peanuts:latest
@@ -44,10 +43,8 @@ services:
       LLM_ENDPOINT: ${LLM_ENDPOINT}
       LLM_MODEL: ${LLM_MODEL}
       BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT}
-    ports:
-      - '3000:3000'
     networks:
-      # - caddy
+      - caddy
       - db
     labels:
       caddy: peanuts.server.ch
@@ -57,8 +54,8 @@ services:
         condition: service_completed_successfully
 
 networks:
-  # caddy:
-  #   external: true
+  caddy:
+    external: true
   db:
 
 volumes:
