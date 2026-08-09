@@ -38,6 +38,13 @@ COPY --from=builder --chown=appuser:appgroup /app/build ./build
 # Drizzle needs the TS schema file at runtime to read the structure
 COPY --from=builder --chown=appuser:appgroup /app/drizzle.config.ts ./
 COPY --from=builder --chown=appuser:appgroup /app/src/lib/server/db ./src/lib/server/db
+COPY --from=builder --chown=appuser:appgroup /app/node_modules/.bin/drizzle-kit ./node_modules/.bin/
+COPY --from=builder --chown=appuser:appgroup /app/node_modules/drizzle-kit ./node_modules/drizzle-kit
+COPY --from=builder --chown=appuser:appgroup /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=builder --chown=appuser:appgroup /app/node_modules/postgres ./node_modules/postgres
+# Copy config and schema
+COPY --from=builder --chown=appuser:appgroup /app/drizzle.config.ts ./
+COPY --from=builder --chown=appuser:appgroup /app/src/lib/server/db ./src/lib/server/db
 
 USER appuser
 ENV NODE_ENV=production
