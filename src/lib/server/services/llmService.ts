@@ -4,7 +4,7 @@ import { LLM_API_KEY, LLM_MODEL, LLM_ENDPOINT } from '$env/static/private';
 import { ReceiptSchema } from '../repository/receptRepository';
 import * as z from 'zod';
 
-const llmReceiptSchema = ReceiptSchema.omit({ userId: true, id: true, boughtAt: true });
+const llmReceiptSchema = ReceiptSchema.omit({ userId: true, id: true });
 type LlmReceiptSchema = z.infer<typeof llmReceiptSchema>;
 
 class LLMService {
@@ -51,7 +51,7 @@ class LLMService {
 					content: [
 						{
 							type: 'text',
-							text: `Extract the receipt information from this image. Generate a structured JSON output for ${zodTextFormat(llmReceiptSchema, 'receipt')}`
+							text: `Extract the receipt information from this image. All monetary values must be expressed as decimal values. Generate a structured JSON output for ${zodTextFormat(llmReceiptSchema, 'receipt')}`
 						},
 						{
 							type: 'image_url',
@@ -71,8 +71,22 @@ class LLMService {
 			}
 		});
 		const responseData = response.choices[0].message.content || '';
+		console.log(responseData);
+		const responseJSON = JSON.parse(responseData);
+		let date: string | undefined;
+		try {
+			date = new Date(responseJSON.boughtAt).toISOString();
+		} catch {
+			date = new Date().toISOString();
+		}
+		const receipt = llmReceiptSchema.parse({ ...responseJSON, boughtAt: date });
+		receipt.items = receipt.items.map((item) => ({
+			...item,
+			unitPrice: Math.round(item.unitPrice * 100),
+			totalPrice: Math.round(item.totalPrice * 100)
+		}));
 
-		return llmReceiptSchema.parse(JSON.parse(responseData));
+		return receipt;
 	}
 }
 

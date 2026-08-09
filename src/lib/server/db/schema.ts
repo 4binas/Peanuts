@@ -111,6 +111,7 @@ export const receipt = pgTable('receipt', {
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id),
+	storeName: text('store_name').notNull(),
 	boughtAt: timestamp('bought_at').defaultNow().notNull(),
 	totalPrice: integer('total_price').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),

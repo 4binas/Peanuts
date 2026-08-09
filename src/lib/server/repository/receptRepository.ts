@@ -18,7 +18,8 @@ export type ReceiptItem = z.infer<typeof ReceiptItemSchema>;
 export const ReceiptSchema = z.object({
 	id: z.number(),
 	userId: z.string(),
-	boughtAt: z.iso.datetime().optional().nullable(),
+	storeName: z.string(),
+	boughtAt: z.iso.datetime(),
 	items: z.array(ReceiptItemSchema),
 	totalPrice: z.number()
 });
@@ -33,6 +34,7 @@ class ReceiptRepository {
 
 	async createReceipt(
 		userId: string,
+		storeName: string,
 		totalPrice: number,
 		items?: ReceiptItem[],
 		boughtAt: Date = new Date()
@@ -41,6 +43,7 @@ class ReceiptRepository {
 			.insert(receipt)
 			.values({
 				userId,
+				storeName,
 				totalPrice: Number.parseInt((totalPrice * 100).toFixed(0), 10)
 			})
 			.returning()

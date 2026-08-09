@@ -1,6 +1,5 @@
 import { form, getRequestEvent } from '$app/server';
 import { auth } from '$lib/server/auth';
-import { receiptRepository } from '$lib/server/repository/receptRepository';
 import llmService from '$lib/server/services/llmService';
 import * as v from 'valibot';
 
@@ -24,7 +23,6 @@ export const createReceipt = form(
 		const result = await llmService.generateReciptFromImage(dataUrl);
 
 		try {
-			await receiptRepository.createReceipt(session.user.id, result.totalPrice, result.items);
 			return { receipt: result };
 		} catch (error) {
 			throw new Error('Failed to create receipt: ' + error, { cause: error });

@@ -1,73 +1,164 @@
 <script lang="ts">
-	import { Plus } from '@lucide/svelte';
+	import { ImageUp, Plus } from '@lucide/svelte';
 	import './receipt.css';
+	import { uuidv4, ZodUUID } from 'zod';
+	import { tick } from 'svelte';
+	import { createReceipt } from '../../routes/(private)/receipt/receipt.remote';
+	import { slide } from 'svelte/transition';
 
-	let items = $state([
-		{ name: 'Tomato', price: 1.99 },
-		{ name: 'Potato', price: 1.99 }
-	]);
+	let storeName = $state('');
+	let boughtAt: Date = $state(new Date());
+	let boughtAtInput = $derived(boughtAt.toISOString().slice(0, 10));
+	let items: { name: string; price: number; id: ZodUUID }[] = $state([]);
 
-	const addItem = () => {
-		items = [...items, { name: '', price: 0 }];
+	let lastInput: HTMLInputElement | undefined = $state(undefined);
+
+	let imageLoading = $state(false);
+
+	const addItem = async () => {
+		items = [...items, { name: '', price: 0, id: uuidv4() }];
+		await tick();
+		// await tick();
+		setTimeout(() => {
+			lastInput?.focus();
+		}, 305);
 	};
 
-	const total = $derived(items.reduce((acc, item) => acc + item.price, 0));
+	const total = $derived((items.reduce((acc, item) => acc + item.price, 0) / 100).toFixed(2));
 
 	const currency = 'CHF';
+
+	let fileInput: HTMLInputElement;
+
+	let form: HTMLFormElement;
+
+	const handleImageSelect = () => {
+		imageLoading = true;
+		if (fileInput?.files?.length) {
+			form?.requestSubmit();
+		}
+	};
+
+	const deleteItem = (id: ZodUUID) => {
+		items = items.filter((item) => item.id !== id);
+	};
+
+	$effect(() => {
+		if (createReceipt.result?.receipt) {
+			items = createReceipt.result.receipt.items.map((item) => ({
+				name: item.name,
+				price: item.totalPrice,
+				id: uuidv4()
+			}));
+			storeName = createReceipt.result.receipt.storeName;
+			boughtAt = new Date(createReceipt.result.receipt.boughtAt);
+			console.log(createReceipt.result?.receipt);
+			imageLoading = false;
+		}
+	});
 </script>
 
 <div class="receipt">
-	<input type="text" class="title" placeholder="Store" value="MIGROS" />
-	<input type="date" class="date" value={new Date().toISOString().split('T')[0]} />
+	<div>
+		<form
+			bind:this={form}
+			{...createReceipt}
+			enctype="multipart/form-data"
+			class="grid justify-end"
+		>
+			<!-- form content goes here -->
+
+			<!-- <input {...createReceipt.fields.prompt.as('text')} /> -->
+			<input
+				bind:this={fileInput}
+				onchange={handleImageSelect}
+				{...createReceipt.fields.image.as('file')}
+				hidden
+			/>
+
+			<button
+				class="btn btn-outline"
+				type="button"
+				onclick={() => fileInput?.click()}
+				aria-label="Upload image"
+				disabled={imageLoading}
+			>
+				{#if imageLoading}
+					<span class="loading loading-md loading-spinner"></span>
+				{:else}
+					<ImageUp size={18} />
+				{/if}
+			</button>
+		</form>
+
+		<input type="text" class="title" placeholder="Store" bind:value={storeName} />
+	</div>
+	<input
+		type="date"
+		class="date"
+		value={boughtAtInput}
+		onchange={(e) => {
+			boughtAt = new Date(`${e.currentTarget.value}T00:00:00`);
+		}}
+	/>
 	<div class="overflow-x-auto">
 		<div class="items">
 			<!-- head -->
 			<div class="items_head">
 				<div class="name item-title">Item</div>
-				<div class="price item-title">Price</div>
+				<div class="price-title item-title">
+					{currency}
+				</div>
 			</div>
 
 			<!-- body -->
-			{#each items as item, index (index)}
-				<div class="item-container">
-					<input
-						type="text"
-						class="item name"
-						value={item.name}
-						onchange={(e) => {
-							console.log(e);
-							items = items.map((i, idx) =>
-								idx === index ? { ...i, name: (e.target as HTMLInputElement).value } : i
-							);
-						}}
-					/>
-					<input
-						type="number"
-						class="item price"
-						value={item.price.toFixed(2)}
-						onchange={(e) => {
-							items = items.map((i, idx) =>
-								idx === index
-									? {
-											...i,
-											price: Number.parseFloat((e.target as HTMLInputElement).value)
-										}
-									: i
-							);
-						}}
-					/>
-					<div class="item currency">{currency}</div>
-				</div>
-			{/each}
+			<div class="item-container">
+				{#each items as item (item.id)}
+					<div class="item-row" transition:slide={{ duration: 300 }}>
+						<input
+							type="text"
+							class="item name"
+							required
+							bind:value={item.name}
+							bind:this={lastInput}
+							onblur={(e) => {
+								item.name = (e.target as HTMLInputElement).value;
+								if (item.name.trim() === '') {
+									deleteItem(item.id);
+								}
+							}}
+						/>
+						<input
+							type="number"
+							class="item price"
+							value={(item.price / 100).toFixed(2)}
+							onfocus={(e) => {
+								(e.target as HTMLInputElement).select();
+							}}
+							onblur={(e) =>
+								(item.price = Math.round(
+									parseFloat((e.target as HTMLInputElement).value || '0') * 100
+								))}
+							inputmode="decimal"
+						/>
+						<div class="item-actions">
+							<button>SPLIT</button>
+							<button onclick={() => deleteItem(item.id)}>DELETE</button>
+						</div>
+					</div>
+
+					<!-- <div class="item currency">{currency}</div> -->
+				{/each}
+			</div>
 			<div class="add-item">
 				<button class="add-item" onclick={addItem}> <Plus size={16} /> Add Item </button>
 			</div>
 		</div>
 
 		<div class="total">
-			<div class="item name">Total</div>
-			<div class="item price">{total}</div>
-			<div class="item currency">{currency}</div>
+			<div class="item name">Total {currency}</div>
+			<div class="price-title item">{total}</div>
+			<!-- <div class="item currency">{currency}</div> -->
 		</div>
 	</div>
 </div>

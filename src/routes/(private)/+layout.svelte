@@ -10,23 +10,25 @@
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-<main class="px-5 pt-5">
-	{@render children()}
-</main>
+<div class="grid h-screen grid-rows-[1fr_auto]">
+	<main class="overflow-y-auto px-5 pt-5">
+		{@render children()}
+	</main>
 
-<footer class="dock">
-	<a class={pathname.startsWith('/receipt') ? 'dock-active' : ''} href={resolve('/receipt')}>
-		<House />
-		<span class="dock-label">Home</span>
-	</a>
+	<footer class="dock relative">
+		<a class={pathname.startsWith('/receipt') ? 'dock-active' : ''} href={resolve('/receipt')}>
+			<House />
+			<span class="dock-label">Home</span>
+		</a>
 
-	<a class={pathname.startsWith('/groups') ? 'dock-active' : ''} href={resolve('/groups')}>
-		<Birdhouse />
-		<span class="dock-label">Groups</span>
-	</a>
+		<a class={pathname.startsWith('/groups') ? 'dock-active' : ''} href={resolve('/groups')}>
+			<Birdhouse />
+			<span class="dock-label">Groups</span>
+		</a>
 
-	<a class={pathname.startsWith('/settings') ? 'dock-active' : ''} href={resolve('/settings')}>
-		<Settings />
-		<span class="dock-label">Settings</span>
-	</a>
-</footer>
+		<a class={pathname.startsWith('/settings') ? 'dock-active' : ''} href={resolve('/settings')}>
+			<Settings />
+			<span class="dock-label">Settings</span>
+		</a>
+	</footer>
+</div>
