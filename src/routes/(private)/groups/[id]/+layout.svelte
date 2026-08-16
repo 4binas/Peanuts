@@ -3,9 +3,11 @@
 	import { HandCoins, PanelsTopLeft, Plus } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { setGroup } from './groupContext';
 
 	let { children, data } = $props();
 	let group = $derived(data.groups.find((g) => g.id === page.params.id));
+	setGroup(() => group);
 	let pageName = $derived(page.url.toString());
 </script>
 

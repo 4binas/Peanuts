@@ -108,9 +108,12 @@ export const accountRelations = relations(account, ({ one }) => ({
 
 export const receipt = pgTable('receipt', {
 	id: uuid('id').primaryKey().defaultRandom(),
-	userId: text('user_id')
+	boughtById: text('user_id')
 		.notNull()
 		.references(() => user.id),
+	groupId: uuid('group_id')
+		.notNull()
+		.references(() => group.id),
 	storeName: text('store_name').notNull(),
 	boughtAt: timestamp('bought_at').defaultNow().notNull(),
 	totalPrice: integer('total_price').notNull(),
@@ -123,8 +126,12 @@ export const receipt = pgTable('receipt', {
 
 export const receiptRelations = relations(receipt, ({ one, many }) => ({
 	user: one(user, {
-		fields: [receipt.userId],
+		fields: [receipt.boughtById],
 		references: [user.id]
+	}),
+	group: one(group, {
+		fields: [receipt.groupId],
+		references: [group.id]
 	}),
 	items: many(receipt_item)
 }));
@@ -136,10 +143,7 @@ export const receipt_item = pgTable('receipt_item', {
 		.references(() => receipt.id),
 	name: text('name'),
 	description: text('description'),
-	quantity: integer('quantity').notNull(),
-	unitPrice: integer('unit_price').notNull(),
-	discount: integer('discount').notNull().default(0),
-	totalPrice: integer('total_price').notNull(),
+	price: integer('price').notNull(),
 	currency: varchar('currency', { length: 3 }).notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
@@ -147,6 +151,28 @@ export const receipt_item = pgTable('receipt_item', {
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull()
 });
+
+export const receipt_split = pgTable('receipt_split', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	receiptId: uuid('receipt_id')
+		.notNull()
+		.references(() => receipt.id),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id),
+	splitPercentage: integer('split_percentage').notNull()
+});
+
+export const receipt_splitRelations = relations(receipt_split, ({ one }) => ({
+	receipt: one(receipt, {
+		fields: [receipt_split.receiptId],
+		references: [receipt.id]
+	}),
+	user: one(user, {
+		fields: [receipt_split.userId],
+		references: [user.id]
+	})
+}));
 
 export const exchangeRate = pgTable('exchange_rate', {
 	id: uuid('id').primaryKey().defaultRandom(),

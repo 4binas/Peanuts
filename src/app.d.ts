@@ -17,3 +17,5 @@ declare global {
 }
 
 export {};
+
+/// <reference types="vite-plugin-pwa/svelte" />

@@ -1,24 +1,46 @@
 <script lang="ts">
-	import { ImageUp, Plus } from '@lucide/svelte';
+	import { ImageUp, Plus, Split } from '@lucide/svelte';
 	import './receipt.css';
 	import { uuidv4, ZodUUID } from 'zod';
 	import { tick } from 'svelte';
-	import { createReceipt } from '../../routes/(private)/receipt/receipt.remote';
 	import { slide } from 'svelte/transition';
+	import Barcode from './Barcode.svelte';
+	import { parseReceiptImage } from '../../../../../receipt/receipt.remote';
+	import type { ReceiptItem } from '$lib/server/repository/receptRepository';
+	import { getGroup } from '../../../groupContext';
+
+	type ReceiptItemWithID = ReceiptItem & { id: ZodUUID };
 
 	let storeName = $state('');
 	let boughtAt: Date = $state(new Date());
 	let boughtAtInput = $derived(boughtAt.toISOString().slice(0, 10));
-	let items: { name: string; price: number; id: ZodUUID }[] = $state([]);
+	let items: ReceiptItemWithID[] = $state([]);
+	const getGroupFn = getGroup();
+	const group = $derived(getGroupFn());
+	const defaultReceiptSplit = $derived(
+		group?.members.map((member) => ({
+			userId: member.userId,
+			splitPercentage: 1 / group.members.length
+		})) || []
+	);
 
 	let lastInput: HTMLInputElement | undefined = $state(undefined);
 
 	let imageLoading = $state(false);
 
 	const addItem = async () => {
-		items = [...items, { name: '', price: 0, id: uuidv4() }];
+		if (!group) return;
+		items = [
+			...items,
+			{
+				name: '',
+				price: 0,
+				id: uuidv4(),
+				currency: 'CHF',
+				receiptSplit: defaultReceiptSplit
+			}
+		];
 		await tick();
-		// await tick();
 		setTimeout(() => {
 			lastInput?.focus();
 		}, 305);
@@ -44,15 +66,18 @@
 	};
 
 	$effect(() => {
-		if (createReceipt.result?.receipt) {
-			items = createReceipt.result.receipt.items.map((item) => ({
+		if (parseReceiptImage.result?.receipt) {
+			items = parseReceiptImage.result.receipt.items.map((item) => ({
 				name: item.name,
-				price: item.totalPrice,
-				id: uuidv4()
+				price: item.price,
+				id: uuidv4(),
+				currency: item.currency,
+				receiptSplit: defaultReceiptSplit
 			}));
-			storeName = createReceipt.result.receipt.storeName;
-			boughtAt = new Date(createReceipt.result.receipt.boughtAt);
-			console.log(createReceipt.result?.receipt);
+
+			storeName = parseReceiptImage.result.receipt.storeName;
+			boughtAt = new Date(parseReceiptImage.result.receipt.boughtAt);
+			console.log(parseReceiptImage.result?.receipt);
 			imageLoading = false;
 		}
 	});
@@ -62,7 +87,7 @@
 	<div>
 		<form
 			bind:this={form}
-			{...createReceipt}
+			{...parseReceiptImage}
 			enctype="multipart/form-data"
 			class="grid justify-end"
 		>
@@ -72,7 +97,7 @@
 			<input
 				bind:this={fileInput}
 				onchange={handleImageSelect}
-				{...createReceipt.fields.image.as('file')}
+				{...parseReceiptImage.fields.image.as('file')}
 				hidden
 			/>
 
@@ -106,6 +131,7 @@
 			<!-- head -->
 			<div class="items_head">
 				<div class="name item-title">Item</div>
+				<div class="split item-title"><Split size={16} /></div>
 				<div class="price-title item-title">
 					{currency}
 				</div>
@@ -115,32 +141,35 @@
 			<div class="item-container">
 				{#each items as item (item.id)}
 					<div class="item-row" transition:slide={{ duration: 300 }}>
-						<input
-							type="text"
-							class="item name"
-							required
-							bind:value={item.name}
-							bind:this={lastInput}
-							onblur={(e) => {
-								item.name = (e.target as HTMLInputElement).value;
-								if (item.name.trim() === '') {
-									deleteItem(item.id);
-								}
-							}}
-						/>
-						<input
-							type="number"
-							class="item price"
-							value={(item.price / 100).toFixed(2)}
-							onfocus={(e) => {
-								(e.target as HTMLInputElement).select();
-							}}
-							onblur={(e) =>
-								(item.price = Math.round(
-									parseFloat((e.target as HTMLInputElement).value || '0') * 100
-								))}
-							inputmode="decimal"
-						/>
+						<div class="item-details">
+							<input
+								type="text"
+								class="item name"
+								required
+								bind:value={item.name}
+								bind:this={lastInput}
+								onblur={(e) => {
+									item.name = (e.target as HTMLInputElement).value;
+									if (item.name.trim() === '') {
+										deleteItem(item.id);
+									}
+								}}
+							/>
+							<button> <span>{item.receiptSplit.length}</span></button>
+							<input
+								type="number"
+								class="item price"
+								value={(item.price / 100).toFixed(2)}
+								onfocus={(e) => {
+									(e.target as HTMLInputElement).select();
+								}}
+								onblur={(e) =>
+									(item.price = Math.round(
+										parseFloat((e.target as HTMLInputElement).value || '0') * 100
+									))}
+								inputmode="decimal"
+							/>
+						</div>
 						<div class="item-actions">
 							<button>SPLIT</button>
 							<button onclick={() => deleteItem(item.id)}>DELETE</button>
@@ -156,6 +185,10 @@
 		<div class="total">
 			<div class="item name">Total {currency}</div>
 			<div class="price-title item">{total}</div>
+		</div>
+		<div class="barcode">
+			<Barcode />
+			<button> Add Receipt </button>
 		</div>
 	</div>
 </div>

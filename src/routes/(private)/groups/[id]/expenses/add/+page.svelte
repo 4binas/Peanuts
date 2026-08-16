@@ -1,5 +1,5 @@
 <script>
-	import Receipt from '$lib/components/Receipt.svelte';
+	import Receipt from './receipt/Receipt.svelte';
 </script>
 
 <div>

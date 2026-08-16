@@ -1,9 +1,10 @@
-import { form, getRequestEvent } from '$app/server';
+import { command, form, getRequestEvent } from '$app/server';
 import { getAuth } from '$lib/server/auth';
+import { receiptRepository, ReceiptSchema } from '$lib/server/repository/receptRepository';
 import { generateReciptFromImage } from '$lib/server/services/llmService';
 import * as v from 'valibot';
 
-export const createReceipt = form(
+export const parseReceiptImage = form(
 	v.object({
 		// prompt: v.pipe(v.string(), v.nonEmpty()),
 		image: v.pipe(v.file(), v.mimeType(['image/jpeg', 'image/png', 'image/webp']), v.minSize(1))
@@ -29,3 +30,19 @@ export const createReceipt = form(
 		}
 	}
 );
+
+export const createReceipt = command(ReceiptSchema, async (data) => {
+	const event = getRequestEvent();
+	const session = await getAuth().api.getSession({
+		headers: event.request.headers
+	});
+
+	if (!session) {
+		throw new Error('Unauthorized');
+	}
+
+	//TODO: Check if the user belongs to the group!!
+
+	const receipt = await receiptRepository.createReceipt({ ...data });
+	return receipt;
+});

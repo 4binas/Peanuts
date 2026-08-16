@@ -1,10 +1,12 @@
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 import { env } from '$env/dynamic/private';
-import { ReceiptSchema } from '../repository/receptRepository';
+import { ReceiptItemSchema, ReceiptSchema } from '../repository/receptRepository';
 import * as z from 'zod';
 
-const llmReceiptSchema = ReceiptSchema.omit({ userId: true, id: true });
+const llmReceiptSchema = ReceiptSchema.omit({ boughtById: true, id: true, groupId: true }).extend({
+	items: z.array(ReceiptItemSchema.omit({ receiptSplit: true }))
+});
 type LlmReceiptSchema = z.infer<typeof llmReceiptSchema>;
 
 const getLLMService = () => {

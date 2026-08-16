@@ -6,6 +6,8 @@ import * as v from 'valibot';
 
 export const createExpense = form(
 	v.object({
+		groupId: v.pipe(v.string(), v.nonEmpty()),
+		boughtById: v.pipe(v.string(), v.nonEmpty()),
 		boughtAt: v.pipe(v.string(), v.nonEmpty()),
 		totalPrice: v.pipe(v.number(), v.minValue(0)),
 		storeName: v.pipe(v.string(), v.nonEmpty())
@@ -24,7 +26,8 @@ export const createExpense = form(
 			const newReceipt = await db
 				.insert(receipt)
 				.values({
-					userId: session.user.id,
+					groupId: data.groupId,
+					boughtById: data.boughtById,
 					totalPrice: data.totalPrice,
 					storeName: data.storeName
 				})
