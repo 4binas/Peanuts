@@ -10,7 +10,7 @@ export const ReceiptItemSplitSchema = z.object({
 
 export const ReceiptItemSchema = z.object({
 	name: z.string(),
-	description: z.string().optional(),
+	description: z.string().optional().nullable(),
 	price: z.number(),
 	currency: z.string(),
 	receiptSplit: z.array(ReceiptItemSplitSchema)
@@ -19,16 +19,19 @@ export const ReceiptItemSchema = z.object({
 export type ReceiptItem = z.infer<typeof ReceiptItemSchema>;
 
 export const ReceiptSchema = z.object({
-	id: z.number(),
+	id: z.string(),
 	boughtById: z.string(),
 	groupId: z.string(),
 	storeName: z.string(),
 	boughtAt: z.iso.datetime(),
-	items: z.array(ReceiptItemSchema),
-	totalPrice: z.number()
+	items: z.array(ReceiptItemSchema)
 });
 
+export const CreateReceiptSchema = ReceiptSchema.omit({ id: true });
+
 export type Receipt = z.infer<typeof ReceiptSchema>;
+
+export type CreateReceipt = z.infer<typeof CreateReceiptSchema>;
 
 class ReceiptRepository {
 	async getReceipts(groupId: string) {
@@ -36,7 +39,28 @@ class ReceiptRepository {
 		return receipts;
 	}
 
-	async createReceipt(uploadReceipt: Receipt) {
+	async getReceipt(receiptId: string) {
+		const res = await db.query.receipt.findFirst({
+			where: eq(receipt?.id, receiptId),
+			with: {
+				items: {
+					with: {
+						receipt_splits: true
+					}
+				}
+			}
+		});
+		return res;
+	}
+
+	async deleteReceipt(receiptId: string) {
+		const tx = await db.transaction(async () => {
+			await db.delete(receipt).where(eq(receipt.id, receiptId));
+		});
+		return tx;
+	}
+
+	async createReceipt(uploadReceipt: CreateReceipt) {
 		const tx = await db.transaction(async () => {
 			const newReceipt = await db
 				.insert(receipt)
@@ -44,38 +68,43 @@ class ReceiptRepository {
 					boughtById: uploadReceipt.boughtById,
 					groupId: uploadReceipt.groupId,
 					storeName: uploadReceipt.storeName,
-					boughtAt: new Date(uploadReceipt.boughtAt),
-					totalPrice: Number.parseInt((uploadReceipt.totalPrice * 100).toFixed(0), 10)
+					boughtAt: new Date(uploadReceipt.boughtAt)
 				})
 				.returning()
 				.then((res) => res[0]);
 			const items = [];
-			const itemSplits = [];
+			const itemSplits: { userId: string; splitPercentage: number; receipt_item_id: string }[] = [];
 			if (uploadReceipt.items) {
 				for (const i of uploadReceipt.items) {
 					if (!i.receiptSplit) {
 						throw new Error('receiptSplit must be split with users can be split with one');
 					}
 					const totalSplit = i.receiptSplit.reduce((acc, split) => acc + split.splitPercentage, 0);
-					if (totalSplit !== 1) {
-						throw new Error('receiptSplit must sum to 1');
+					if (totalSplit !== 100) {
+						throw new Error('receiptSplit must sum to 100');
 					}
-					itemSplits.push(
-						...i.receiptSplit.map((split) => ({
-							...split,
-							receiptId: newReceipt.id
-						}))
-					);
 
 					items.push({
-						...i,
+						name: i.name,
+						description: i.description,
+						currency: i.currency,
 						receiptId: newReceipt.id,
-						totalPrice: Number.parseInt((i.price * 100).toFixed(0), 10)
+						price: Number.parseInt(i.price.toFixed(0), 10)
 					});
 				}
 				if (items.length > 0) {
+					const insertedItems = await db.insert(receipt_item).values(items).returning();
+					for (const [index, value] of insertedItems.entries()) {
+						itemSplits.push(
+							...uploadReceipt.items[index].receiptSplit.map((split) => ({
+								userId: split.userId,
+								splitPercentage: split.splitPercentage,
+								receipt_item_id: value.id
+							}))
+						);
+					}
+					console.log(itemSplits);
 					await db.insert(receipt_split).values(itemSplits);
-					await db.insert(receipt_item).values(items);
 				}
 			}
 			return newReceipt;

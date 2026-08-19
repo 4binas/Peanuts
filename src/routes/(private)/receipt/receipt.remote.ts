@@ -1,6 +1,10 @@
-import { command, form, getRequestEvent } from '$app/server';
+import { command, form, getRequestEvent, query } from '$app/server';
 import { getAuth } from '$lib/server/auth';
-import { receiptRepository, ReceiptSchema } from '$lib/server/repository/receptRepository';
+import {
+	CreateReceiptSchema,
+	receiptRepository,
+	ReceiptSchema
+} from '$lib/server/repository/receptRepository';
 import { generateReciptFromImage } from '$lib/server/services/llmService';
 import * as v from 'valibot';
 
@@ -31,7 +35,7 @@ export const parseReceiptImage = form(
 	}
 );
 
-export const createReceipt = command(ReceiptSchema, async (data) => {
+export const createReceipt = command(CreateReceiptSchema, async (data) => {
 	const event = getRequestEvent();
 	const session = await getAuth().api.getSession({
 		headers: event.request.headers
@@ -42,7 +46,42 @@ export const createReceipt = command(ReceiptSchema, async (data) => {
 	}
 
 	//TODO: Check if the user belongs to the group!!
+	const receipt = await receiptRepository.createReceipt({ ...data });
+	return receipt;
+});
 
+export const deleteReceipt = command(
+	v.object({
+		receiptId: v.pipe(v.string(), v.nonEmpty())
+	}),
+	async (data) => {
+		await receiptRepository.deleteReceipt(data.receiptId);
+	}
+);
+
+export const getReceipt = query(
+	v.object({
+		receiptId: v.pipe(v.string(), v.nonEmpty())
+	}),
+	async (data) => {
+		//TODO: Check if the user belongs to the group!!
+		const receipt = await receiptRepository.getReceipt(data.receiptId);
+		return receipt;
+	}
+);
+
+export const patchReceipt = command(ReceiptSchema, async (data) => {
+	const event = getRequestEvent();
+	const session = await getAuth().api.getSession({
+		headers: event.request.headers
+	});
+
+	if (!session) {
+		throw new Error('Unauthorized');
+	}
+	//TODO: Check if the user belongs to the group!!
+	//TODO: Actually patch the receipt
+	await receiptRepository.deleteReceipt(data.id);
 	const receipt = await receiptRepository.createReceipt({ ...data });
 	return receipt;
 });

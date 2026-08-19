@@ -15,6 +15,34 @@
       "when": 1786866700237,
       "tag": "0001_lean_ogun",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787089077884,
+      "tag": "0002_loving_the_phantom",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787090749713,
+      "tag": "0003_ambiguous_phil_sheldon",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787091429416,
+      "tag": "0004_huge_screwball",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787092226715,
+      "tag": "0005_black_white_queen",
+      "breakpoints": true
     }
   ]
 }

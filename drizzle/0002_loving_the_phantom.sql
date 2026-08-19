@@ -1,0 +1,1 @@
+ALTER TABLE "receipt" DROP COLUMN "total_price";

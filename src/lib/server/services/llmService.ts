@@ -79,8 +79,7 @@ export const generateReciptFromImage = async (image_base64: string): Promise<Llm
 	const receipt = llmReceiptSchema.parse({ ...responseJSON, boughtAt: date });
 	receipt.items = receipt.items.map((item) => ({
 		...item,
-		unitPrice: Math.round(item.unitPrice * 100),
-		totalPrice: Math.round(item.totalPrice * 100)
+		price: Math.round(item.price * 100)
 	}));
 
 	return receipt;

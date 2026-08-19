@@ -116,7 +116,6 @@ export const receipt = pgTable('receipt', {
 		.references(() => group.id),
 	storeName: text('store_name').notNull(),
 	boughtAt: timestamp('bought_at').defaultNow().notNull(),
-	totalPrice: integer('total_price').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()
@@ -125,7 +124,7 @@ export const receipt = pgTable('receipt', {
 });
 
 export const receiptRelations = relations(receipt, ({ one, many }) => ({
-	user: one(user, {
+	boughtBy: one(user, {
 		fields: [receipt.boughtById],
 		references: [user.id]
 	}),
@@ -140,7 +139,7 @@ export const receipt_item = pgTable('receipt_item', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	receiptId: uuid('receipt_id')
 		.notNull()
-		.references(() => receipt.id),
+		.references(() => receipt.id, { onDelete: 'cascade' }),
 	name: text('name'),
 	description: text('description'),
 	price: integer('price').notNull(),
@@ -154,9 +153,9 @@ export const receipt_item = pgTable('receipt_item', {
 
 export const receipt_split = pgTable('receipt_split', {
 	id: uuid('id').primaryKey().defaultRandom(),
-	receiptId: uuid('receipt_id')
+	receipt_item_id: uuid('receipt_item_id')
 		.notNull()
-		.references(() => receipt.id),
+		.references(() => receipt_item.id, { onDelete: 'cascade' }),
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id),
@@ -164,9 +163,9 @@ export const receipt_split = pgTable('receipt_split', {
 });
 
 export const receipt_splitRelations = relations(receipt_split, ({ one }) => ({
-	receipt: one(receipt, {
-		fields: [receipt_split.receiptId],
-		references: [receipt.id]
+	receipt_item: one(receipt_item, {
+		fields: [receipt_split.receipt_item_id],
+		references: [receipt_item.id]
 	}),
 	user: one(user, {
 		fields: [receipt_split.userId],
@@ -182,11 +181,12 @@ export const exchangeRate = pgTable('exchange_rate', {
 	date: timestamp('date').defaultNow().notNull()
 });
 
-export const receipt_itemRelations = relations(receipt_item, ({ one }) => ({
+export const receipt_itemRelations = relations(receipt_item, ({ one, many }) => ({
 	receipt: one(receipt, {
 		fields: [receipt_item.receiptId],
 		references: [receipt.id]
-	})
+	}),
+	receipt_splits: many(receipt_split)
 }));
 
 // Group

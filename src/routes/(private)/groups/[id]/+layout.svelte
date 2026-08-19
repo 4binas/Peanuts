@@ -9,6 +9,8 @@
 	let group = $derived(data.groups.find((g) => g.id === page.params.id));
 	setGroup(() => group);
 	let pageName = $derived(page.url.toString());
+
+	console.log(group, pageName);
 </script>
 
 <div class="grid h-full grid-rows-[auto_1fr]">
