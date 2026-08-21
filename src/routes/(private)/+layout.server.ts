@@ -5,4 +5,7 @@ export const load = async ({ locals }) => {
 	if (!user?.id) {
 		throw redirect(302, '/auth/login');
 	}
+	return {
+		user: user
+	};
 };

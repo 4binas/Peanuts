@@ -1,10 +1,12 @@
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 import { env } from '$env/dynamic/private';
-import { ReceiptSchema } from '../repository/receptRepository';
+import { ReceiptItemSchema, ReceiptSchema } from '../repository/receptRepository';
 import * as z from 'zod';
 
-const llmReceiptSchema = ReceiptSchema.omit({ userId: true, id: true });
+const llmReceiptSchema = ReceiptSchema.omit({ boughtById: true, id: true, groupId: true }).extend({
+	items: z.array(ReceiptItemSchema.omit({ receiptSplit: true }))
+});
 type LlmReceiptSchema = z.infer<typeof llmReceiptSchema>;
 
 const getLLMService = () => {
@@ -77,8 +79,7 @@ export const generateReciptFromImage = async (image_base64: string): Promise<Llm
 	const receipt = llmReceiptSchema.parse({ ...responseJSON, boughtAt: date });
 	receipt.items = receipt.items.map((item) => ({
 		...item,
-		unitPrice: Math.round(item.unitPrice * 100),
-		totalPrice: Math.round(item.totalPrice * 100)
+		price: Math.round(item.price * 100)
 	}));
 
 	return receipt;

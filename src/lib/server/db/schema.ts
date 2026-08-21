@@ -108,12 +108,14 @@ export const accountRelations = relations(account, ({ one }) => ({
 
 export const receipt = pgTable('receipt', {
 	id: uuid('id').primaryKey().defaultRandom(),
-	userId: text('user_id')
+	boughtById: text('user_id')
 		.notNull()
 		.references(() => user.id),
+	groupId: uuid('group_id')
+		.notNull()
+		.references(() => group.id),
 	storeName: text('store_name').notNull(),
 	boughtAt: timestamp('bought_at').defaultNow().notNull(),
-	totalPrice: integer('total_price').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()
@@ -122,9 +124,13 @@ export const receipt = pgTable('receipt', {
 });
 
 export const receiptRelations = relations(receipt, ({ one, many }) => ({
-	user: one(user, {
-		fields: [receipt.userId],
+	boughtBy: one(user, {
+		fields: [receipt.boughtById],
 		references: [user.id]
+	}),
+	group: one(group, {
+		fields: [receipt.groupId],
+		references: [group.id]
 	}),
 	items: many(receipt_item)
 }));
@@ -133,13 +139,10 @@ export const receipt_item = pgTable('receipt_item', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	receiptId: uuid('receipt_id')
 		.notNull()
-		.references(() => receipt.id),
+		.references(() => receipt.id, { onDelete: 'cascade' }),
 	name: text('name'),
 	description: text('description'),
-	quantity: integer('quantity').notNull(),
-	unitPrice: integer('unit_price').notNull(),
-	discount: integer('discount').notNull().default(0),
-	totalPrice: integer('total_price').notNull(),
+	price: integer('price').notNull(),
 	currency: varchar('currency', { length: 3 }).notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')
@@ -147,6 +150,28 @@ export const receipt_item = pgTable('receipt_item', {
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull()
 });
+
+export const receipt_split = pgTable('receipt_split', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	receipt_item_id: uuid('receipt_item_id')
+		.notNull()
+		.references(() => receipt_item.id, { onDelete: 'cascade' }),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id),
+	splitPercentage: integer('split_percentage').notNull()
+});
+
+export const receipt_splitRelations = relations(receipt_split, ({ one }) => ({
+	receipt_item: one(receipt_item, {
+		fields: [receipt_split.receipt_item_id],
+		references: [receipt_item.id]
+	}),
+	user: one(user, {
+		fields: [receipt_split.userId],
+		references: [user.id]
+	})
+}));
 
 export const exchangeRate = pgTable('exchange_rate', {
 	id: uuid('id').primaryKey().defaultRandom(),
@@ -156,11 +181,12 @@ export const exchangeRate = pgTable('exchange_rate', {
 	date: timestamp('date').defaultNow().notNull()
 });
 
-export const receipt_itemRelations = relations(receipt_item, ({ one }) => ({
+export const receipt_itemRelations = relations(receipt_item, ({ one, many }) => ({
 	receipt: one(receipt, {
 		fields: [receipt_item.receiptId],
 		references: [receipt.id]
-	})
+	}),
+	receipt_splits: many(receipt_split)
 }));
 
 // Group
@@ -184,7 +210,9 @@ export const groupRelations = relations(group, ({ one, many }) => ({
 		fields: [group.ownerId],
 		references: [user.id]
 	}),
-	members: many(groupMembers)
+	members: many(groupMembers),
+	receipts: many(receipt),
+	payments: many(payment)
 }));
 
 export const groupMembers = pgTable('group_members', {
@@ -204,6 +232,44 @@ export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
 	}),
 	user: one(user, {
 		fields: [groupMembers.userId],
+		references: [user.id]
+	})
+}));
+
+// Payment
+export const payment = pgTable('payment', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	groupId: uuid('group_id')
+		.notNull()
+		.references(() => group.id),
+	amount: integer('amount').notNull(),
+	currency: varchar('currency', { length: 3 }).notNull(),
+	payedAt: timestamp('payed_at').defaultNow().notNull(),
+	fromUserId: text('from_user_id')
+		.notNull()
+		.references(() => user.id),
+	toUserId: text('to_user_id')
+		.notNull()
+		.references(() => user.id),
+	description: text('description'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.defaultNow()
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull()
+});
+
+export const paymentRelations = relations(payment, ({ one }) => ({
+	group: one(group, {
+		fields: [payment.groupId],
+		references: [group.id]
+	}),
+	fromUser: one(user, {
+		fields: [payment.fromUserId],
+		references: [user.id]
+	}),
+	toUser: one(user, {
+		fields: [payment.toUserId],
 		references: [user.id]
 	})
 }));

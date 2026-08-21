@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { HandCoins, PanelsTopLeft, Plus } from '@lucide/svelte';
+	import { Banknote, HandCoins, PanelsTopLeft, Plus } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { setGroup } from './groupContext';
 
 	let { children, data } = $props();
 	let group = $derived(data.groups.find((g) => g.id === page.params.id));
+	setGroup(() => group);
 	let pageName = $derived(page.url.toString());
 </script>
 
@@ -28,10 +30,13 @@
 		</div>
 
 		{#if group}
-			<div role="tablist" class="tabs tabs-border mb-4 grid grid-cols-2">
+			<div role="tablist" class="tabs tabs-border mb-4 grid grid-cols-3">
 				<a
 					role="tab"
-					class={'tab' + (!pageName?.includes('expenses') ? ' tab-active' : '')}
+					class={'tab' +
+						(!pageName?.includes('expenses') && !pageName?.includes('payment')
+							? ' tab-active'
+							: '')}
 					href={resolve(`/groups/${group.id}/`)}
 				>
 					<PanelsTopLeft size={16} class="mr-2" />
@@ -44,6 +49,14 @@
 				>
 					<HandCoins size={16} class="mr-2" />
 					Expenses</a
+				>
+				<a
+					role="tab"
+					class={'tab' + (pageName?.includes('payment') ? ' tab-active' : '')}
+					href={resolve(`/groups/${group.id}/payment`)}
+				>
+					<Banknote size={16} class="mr-2" />
+					Payment</a
 				>
 			</div>
 		{/if}

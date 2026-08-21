@@ -16,17 +16,22 @@ export const getGroups = query(async () => {
 	if (!session?.user.id) error(401, 'Unauthorized');
 
 	// const groups = await db.select().from(group).where(eq(group.ownerId, session.user.id));$
-	const groups = await db.query.group.findMany({
-		where: eq(group.ownerId, session.user.id),
+	const groups = await db.query.groupMembers.findMany({
+		where: eq(groupMembers.userId, session.user.id),
 		with: {
-			members: {
+			group: {
 				with: {
-					user: true
+					owner: true,
+					members: {
+						with: {
+							user: true
+						}
+					}
 				}
 			}
 		}
 	});
-	return groups;
+	return groups.map((g) => g.group);
 });
 
 export const getGroupById = query(v.string(), async (id: string) => {
@@ -45,7 +50,11 @@ export const getGroupById = query(v.string(), async (id: string) => {
 	const groupResult = await db.query.group.findFirst({
 		where: and(eq(group.id, id), eq(group.ownerId, session.user.id)),
 		with: {
-			members: true
+			members: {
+				with: {
+					user: true
+				}
+			}
 		}
 	});
 
