@@ -1,13 +1,5 @@
-<svg
-	id="barcode"
-	width="290px"
-	height="120px"
-	x="0px"
-	y="0px"
-	xmlns="http://www.w3.org/2000/svg"
-	version="1.1"
-	style="transform: translate(0px, 0px); background: rgb(255, 255, 255);"
-	><g transform="translate(0, 0)" style="fill:#000000;"
+<svg id="barcode" xmlns="http://www.w3.org/2000/svg" version="1.1"
+	><g transform="translate(0, 0)" style="fill:oklch(21% 0.006 285.885)"
 		><rect x="0" y="0" width="4" height="100"></rect><rect x="6" y="0" width="2" height="100"
 		></rect><rect x="12" y="0" width="2" height="100"></rect><rect
 			x="22"

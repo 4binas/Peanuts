@@ -14,7 +14,7 @@
 
 <!-- name of each tab group should be unique -->
 
-<div class="grid">
+<div class="grid gap-4">
 	<button
 		class="btn btn-outline"
 		onclick={() => goto(resolve(`/groups/${page.params.id}/members`))}

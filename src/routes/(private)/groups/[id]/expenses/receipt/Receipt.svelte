@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ImageUp, Plus, Split } from '@lucide/svelte';
+	import { ImageUp, Plus, Split, X } from '@lucide/svelte';
 	import './receipt.css';
 	import { uuidv4, ZodUUID } from 'zod';
 	import { tick } from 'svelte';
@@ -57,7 +57,6 @@
 		if (receiptId) {
 			setReceipt(receiptId);
 		}
-		console.log(group);
 	});
 
 	let lastInput: HTMLInputElement | undefined = $state(undefined);
@@ -123,6 +122,24 @@
 					userId: group.members[index].userId,
 					splitPercentage: parseInt(input.value)
 				}));
+			}
+		}
+	};
+
+	const removeSplitPercentage = (splitIdx: number) => {
+		console.log('Test');
+		if (currentItem) {
+			const item = items.find((item) => item.id === currentItem);
+			if (item) {
+				console.log(splitInputs[splitIdx]);
+				const oldValue = parseInt(splitInputs[splitIdx].value);
+				splitInputs.forEach((i, idx) => {
+					if (idx == splitIdx) {
+						i.value = '0';
+					} else {
+						i.value = (parseInt(i.value) + oldValue / (splitInputs.length - 1)).toString();
+					}
+				});
 			}
 		}
 	};
@@ -201,7 +218,9 @@
 				}))
 			});
 		}
-
+		items = [];
+		storeName = '';
+		boughtAt = new Date();
 		goto(resolve(`/groups/${group.id}/expenses`));
 	};
 
@@ -213,10 +232,10 @@
 </script>
 
 <dialog id="my_modal_2" class="modal" bind:this={splitModal}>
-	<div class="modal-box">
+	<div class="modal-box rounded-sm">
 		<h3 class="text-lg font-bold">Split: {items.findLast((i) => i.id == currentItem)?.name}</h3>
-		{#each group?.members as member (member.userId)}
-			<div class="flex justify-between">
+		{#each group?.members as member, idx (member.userId)}
+			<div class="grid grid-cols-[1fr_auto_auto] items-center">
 				<p>{member.user.name}</p>
 				<div>
 					<input
@@ -231,6 +250,7 @@
 						onchange={handleSplitInputChange}
 					/>%
 				</div>
+				<button onclick={() => removeSplitPercentage(idx)}><X size={16} /></button>
 			</div>
 		{/each}
 		<div class="flex justify-end gap-4 pt-4">
@@ -312,6 +332,7 @@
 							<input
 								type="text"
 								class="item name"
+								autocomplete="off"
 								required
 								bind:value={item.name}
 								bind:this={lastInput}
@@ -358,7 +379,8 @@
 			<div class="price-title item">{total}</div>
 		</div>
 		<div class="barcode">
-			<Barcode />
+			<div class="dark:invert"><Barcode /></div>
+
 			<button class="btn btn-outline" disabled={!group} onclick={addOrUpdateReceipt}>
 				{receiptId ? 'Update' : 'Add'} Receipt
 			</button>

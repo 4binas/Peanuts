@@ -1,7 +1,7 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
 	import { resolve } from '$app/paths';
-	import { Birdhouse, House, Settings } from '@lucide/svelte';
+	import { Birdhouse, Settings } from '@lucide/svelte';
 	import { page } from '$app/state';
 
 	let { children } = $props();
@@ -16,10 +16,10 @@
 	</main>
 
 	<footer class="dock relative">
-		<a class={pathname.startsWith('/receipt') ? 'dock-active' : ''} href={resolve('/receipt')}>
+		<!-- <a class={pathname.startsWith('/receipt') ? 'dock-active' : ''} href={resolve('/receipt')}>
 			<House />
 			<span class="dock-label">Home</span>
-		</a>
+		</a> -->
 
 		<a class={pathname.startsWith('/groups') ? 'dock-active' : ''} href={resolve('/groups')}>
 			<Birdhouse />

@@ -93,9 +93,8 @@
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 		padding: 0.1rem 0.6rem;
-		color: var(--ink);
 		background: transparent;
-		border: 1px solid var(--ink);
+		border: 1px solid;
 		border-radius: 2px;
 		cursor: pointer;
 	}

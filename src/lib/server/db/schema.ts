@@ -210,7 +210,9 @@ export const groupRelations = relations(group, ({ one, many }) => ({
 		fields: [group.ownerId],
 		references: [user.id]
 	}),
-	members: many(groupMembers)
+	members: many(groupMembers),
+	receipts: many(receipt),
+	payments: many(payment)
 }));
 
 export const groupMembers = pgTable('group_members', {
@@ -230,6 +232,44 @@ export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
 	}),
 	user: one(user, {
 		fields: [groupMembers.userId],
+		references: [user.id]
+	})
+}));
+
+// Payment
+export const payment = pgTable('payment', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	groupId: uuid('group_id')
+		.notNull()
+		.references(() => group.id),
+	amount: integer('amount').notNull(),
+	currency: varchar('currency', { length: 3 }).notNull(),
+	payedAt: timestamp('payed_at').defaultNow().notNull(),
+	fromUserId: text('from_user_id')
+		.notNull()
+		.references(() => user.id),
+	toUserId: text('to_user_id')
+		.notNull()
+		.references(() => user.id),
+	description: text('description'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.defaultNow()
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull()
+});
+
+export const paymentRelations = relations(payment, ({ one }) => ({
+	group: one(group, {
+		fields: [payment.groupId],
+		references: [group.id]
+	}),
+	fromUser: one(user, {
+		fields: [payment.fromUserId],
+		references: [user.id]
+	}),
+	toUser: one(user, {
+		fields: [payment.toUserId],
 		references: [user.id]
 	})
 }));

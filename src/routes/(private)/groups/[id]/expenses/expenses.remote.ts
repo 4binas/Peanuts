@@ -1,9 +1,9 @@
-import { command, form, getRequestEvent, query } from '$app/server';
+import { form, getRequestEvent, query } from '$app/server';
 import { getAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import { groupMembers, receipt, receipt_item, receipt_split } from '$lib/server/db/schema';
+import { groupMembers, payment, receipt, receipt_item, receipt_split } from '$lib/server/db/schema';
 import * as v from 'valibot';
-import { eq, and, sum, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 export const createExpense = form(
 	v.object({
@@ -81,22 +81,20 @@ export const getExpenses = query(
 	}
 );
 
-type OwedEntry = {
-	receiptId: string;
-	buyerId: string;
-	debtorId: string;
-	amountOwedCents: number;
-};
+type Balance = { userId: string; balanceCents: number };
 
-/** Returns rows of (debtorId owes buyerId amountOwedCents) across a group. */
-async function getAmountsOwed(groupId: string): Promise<OwedEntry[]> {
-	const rows = await db
+async function getGroupBalances(groupId: string): Promise<Balance[]> {
+	const map = new Map<string, number>();
+	const add = (userId: string, delta: number) => map.set(userId, (map.get(userId) ?? 0) + delta);
+
+	// ---- 1. Balances derived from receipt splits ----
+	const splitRows = await db
 		.select({
-			receiptId: receipt.id,
 			buyerId: receipt.boughtById,
 			debtorId: receipt_split.userId,
-			// SUM of (price * splitPercentage / 100), kept in cents as a float
-			amountOwedCents: sum(sql`${receipt_item.price} * ${receipt_split.splitPercentage} / 100.0`)
+			amountOwed: sql<number>`
+        sum(${receipt_item.price} * ${receipt_split.splitPercentage} / 100.0)
+      `
 		})
 		.from(receipt)
 		.innerJoin(receipt_item, eq(receipt_item.receiptId, receipt.id))
@@ -104,30 +102,31 @@ async function getAmountsOwed(groupId: string): Promise<OwedEntry[]> {
 		.where(eq(receipt.groupId, groupId))
 		.groupBy(receipt.id, receipt.boughtById, receipt_split.userId);
 
-	return rows.map((r) => ({
-		receiptId: r.receiptId,
-		buyerId: r.buyerId,
-		debtorId: r.debtorId,
-		amountOwedCents: Number(r.amountOwedCents ?? 0)
-	}));
-}
-
-type Balance = { userId: string; balanceCents: number };
-
-function netBalances(owed: OwedEntry[]): Balance[] {
-	const map = new Map<string, number>();
-
-	for (const row of owed) {
-		if (row.debtorId === row.buyerId) continue; // skip buyer's own share
-		// debtor owes -> negative; buyer is owed -> positive
-		map.set(row.debtorId, (map.get(row.debtorId) ?? 0) - row.amountOwedCents);
-		map.set(row.buyerId, (map.get(row.buyerId) ?? 0) + row.amountOwedCents);
+	for (const row of splitRows) {
+		if (row.buyerId === row.debtorId) continue; // buyer keeps own share
+		const amt = Number(row.amountOwed ?? 0);
+		add(row.debtorId, -amt); // debtor owes -> negative
+		add(row.buyerId, amt); // buyer is owed -> positive
 	}
 
-	return [...map.entries()].map(([userId, balanceCents]) => ({
-		userId,
-		balanceCents
-	}));
+	// ---- 2. Apply payments (money already moved) ----
+	const paymentRows = await db
+		.select({
+			fromUserId: payment.fromUserId,
+			toUserId: payment.toUserId,
+			amount: payment.amount
+		})
+		.from(payment)
+		.where(eq(payment.groupId, groupId));
+
+	for (const p of paymentRows) {
+		add(p.fromUserId, p.amount); // paid out -> improves their balance
+		add(p.toUserId, -p.amount); // received -> reduces what's owed to them
+	}
+
+	return [...map.entries()]
+		.map(([userId, balanceCents]) => ({ userId, balanceCents }))
+		.filter((b) => b.balanceCents !== 0);
 }
 
 export const getBalaceSheet = query(
@@ -135,7 +134,13 @@ export const getBalaceSheet = query(
 		groupId: v.pipe(v.string(), v.nonEmpty())
 	}),
 	async (data) => {
-		const owed = (await getAmountsOwed(data.groupId)).filter((row) => row.debtorId !== row.buyerId);
-		return netBalances(owed);
+		// const payments = await db.query.payment.findMany({
+		// 	where: eq(payment.groupId, data.groupId),
+		// 	groupBy: (payment.fromUserId, pay)
+		// });
+
+		// const owed = (await getAmountsOwed(data.groupId)).filter((row) => row.debtorId !== row.buyerId);
+		// return netBalances(owed);
+		return await getGroupBalances(data.groupId);
 	}
 );
